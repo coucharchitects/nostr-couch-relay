@@ -1,5 +1,6 @@
 {
   "name": "nostr-relay",
+  "description": "CouchDB-based implementation of a NOSTR relay",
   "version": "1.0.0",
   "private": true,
   "type": "module",
