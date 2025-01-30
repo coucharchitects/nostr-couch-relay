@@ -1,0 +1,17 @@
+{
+  "name": "nostr-relay",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "supervisor src/server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^8.5.0",
+    "nanoid": "^5.0.9",
+    "nostr-tools": "^1.14.0",
+    "supervisor": "^0.12.0",
+    "ws": "^8.13.0"
+  }
+}
