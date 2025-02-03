@@ -6,13 +6,20 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "supervisor src/server.js"
+    "dev": "supervisor src/server.js",
+    "test": "vitest"
   },
   "dependencies": {
+    "@noble/hashes": "^1.7.1",
+    "@noble/secp256k1": "^2.2.3",
     "better-sqlite3": "^8.5.0",
     "nanoid": "^5.0.9",
     "nostr-tools": "^1.14.0",
-    "supervisor": "^0.12.0",
     "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "supervisor": "^0.12.0",
+    "vite": "^6.0.11",
+    "vitest": "^3.0.4"
   }
 }
