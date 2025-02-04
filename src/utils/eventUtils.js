@@ -1,6 +1,6 @@
 // src/eventUtils.js
 import { sha256 } from "@noble/hashes/sha256";
-import { utils as secpUtils } from "@noble/secp256k1";
+import { utils as secpUtils, getPublicKey } from "@noble/secp256k1";
 import {schnorr} from '@noble/curves/secp256k1';
 
 /**
@@ -79,4 +79,58 @@ export function validateEvent(event) {
   } catch (e) {
     return false;
   }
+}
+
+/**
+ * Converts a signature provided as an object with numeric keys into a hex string.
+ *
+ * @param {object} sigObj - The signature object, e.g. { "0": 119, "1": 118, ... }.
+ * @returns {string} The signature as a 128-character hex string.
+ */
+function convertSigObjectToHex(sigObj) {
+  return Object.values(sigObj)
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
+ * Generates a new event id for testing purposes
+ * The supplied eventData overwrites the default provided event keys
+ * @param eventData
+ * @returns {Promise<*&{kind: number, created_at: number, content: string, pubkey: string, tags: *[]}>}
+ */
+export async function generateNewEvent (eventData) {
+  const privateKey = secpUtils.randomPrivateKey();
+  // const pubkey = Buffer.from(getPublicKey(privateKey)).toString("hex");
+  const pubkey = Buffer.from(schnorr.getPublicKey(privateKey)).toString("hex");
+
+  const event = {
+    pubkey,
+    created_at: Math.floor(Date.now() / 1000),
+    kind: 1,
+    tags: [],
+    content: 'Test',
+    ...eventData
+  };
+
+  // Compute the event ID and sign it
+  event.id = computeEventId(event);
+  const messageBytes = Buffer.from(event.id, "hex");
+  const signature = await schnorr.sign(messageBytes, privateKey);
+  event.sig = convertSigObjectToHex(signature)
+  return event
+}
+
+/**
+ * Transforms _id to id and removes the _rev, to match nostr doc format
+ * @param docs
+ * @returns {object[]}
+ */
+export function renameCouchMetadata (docs) {
+  return docs.map((doc) => {
+    doc.id = doc._id
+    delete doc._id
+    delete doc._rev
+    return doc
+  })
 }

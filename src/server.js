@@ -1,7 +1,8 @@
 import {WebSocketServer} from 'ws';
 import http from 'http';
 import { handleEvent, handleSubscription, handleClose } from './websocket/handlers.js';
-import { subscriptions } from './websocket/broadcaster.js';
+import { subscriptions, broadcastEvent } from './websocket/broadcaster.js';
+import { startChangesFeedListener } from './db/index.js';
 
 // Create HTTP server
 const server = http.createServer();
@@ -18,12 +19,15 @@ wss.on('connection', (ws) => {
 
       switch (type) {
         case 'EVENT':
-          handleEvent(ws, params[0]);
+          console.log('EVENT', params)
+          await handleEvent(ws, params[0]);
           break;
         case 'REQ':
-          handleSubscription(ws, params[0], params[1], subscriptions);
+          console.log('REQ', params)
+          await handleSubscription(ws, params[0], params[1], subscriptions);
           break;
         case 'CLOSE':
+          console.log('CLOSE', params)
           handleClose(ws, params[0], subscriptions);
           break;
         default:
@@ -36,11 +40,12 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
-    // Clean up subscriptions when client disconnects
-    for (const [subId, subs] of subscriptions.entries()) {
-      if (subs.has(ws)) {
-        subs.delete(ws);
-        if (subs.size === 0) {
+    // Clean up subscriptions when the client disconnects.
+    for (const [subId, subscription] of subscriptions.entries()) {
+      if (subscription.subscribers.has(ws)) {
+        subscription.subscribers.delete(ws);
+        // If there are no more subscribers for this subscription, remove it entirely.
+        if (subscription.subscribers.size === 0) {
           subscriptions.delete(subId);
         }
       }
@@ -52,4 +57,12 @@ wss.on('connection', (ws) => {
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
   console.log(`NOSTR relay server running on ws://localhost:${PORT}`);
+
+  // Start listening to DB changes and broadcast each updated document.
+  startChangesFeedListener((doc) => {
+    console.log('Broadcasting event from couch', doc)
+    // the doc should be transformed using eventUtils.renameCouchMetadata
+    // instead of "id" there's "_id" from the couch doc
+    broadcastEvent(doc);
+  });
 });

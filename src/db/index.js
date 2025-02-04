@@ -1,8 +1,10 @@
 import { nanoid } from 'nanoid'
+import dotenv from 'dotenv';
+dotenv.config();
 
 const COUCHDB_URL = 'http://localhost:5984'; // Replace with your CouchDB URL
 const DB_NAME = 'nostr-events';
-const AUTH_HEADER = 'Basic ' + btoa('radu:sirius'); // Replace with your CouchDB username:password
+const AUTH_HEADER = 'Basic ' + process.env.COUCHDB_AUTH_TOKEN; // Replace with your CouchDB username:password encoded string
 
 // Helper function for making fetch requests
 const fetchCouchDB = async (path, options = {}) => {
@@ -38,12 +40,10 @@ const fetchCouchDB = async (path, options = {}) => {
 // Insert or update an event
 export const insertEvent = async (event) => {
   try {
-    console.log('Starting Insert event', event)
     const docId = event.id || nanoid();
     const existingDoc = await fetchCouchDB(`${DB_NAME}/${docId}`).catch(() => null);
 
     const doc = { ...event, _id: docId };
-    console.log('Inserting event', doc)
     if (existingDoc) {
       doc._rev = existingDoc._rev;
     }
@@ -52,7 +52,6 @@ export const insertEvent = async (event) => {
       method: 'PUT',
       body: JSON.stringify(doc)
     });
-
     return { success: true, id: result.id };
   } catch (error) {
     console.error('Error inserting event:', error);
@@ -70,5 +69,73 @@ export const getEvent = async (id) => {
     return null;
   }
 };
+
+// Query all events using Mango
+export const findEvents = async (query) => {
+  try {
+    const docs = await fetchCouchDB(`${DB_NAME}/_find`, {
+      method: 'POST',
+      body: JSON.stringify(query)
+    });
+    return docs;
+  } catch (error) {
+    console.error('Error retrieving event:', error);
+    return null;
+  }
+}
+
+/**
+ * Starts a long running listener on CouchDB's _changes feed with include_docs enabled.
+ *
+ * This function opens a long polling connection to the _changes feed with a timeout of 5 minutes.
+ * When the request completes (either because data arrived or due to timeout), it calls the provided
+ * callback for each updated document and then immediately reissues the long poll so that it runs continuously.
+ *
+ * @param {Function} onChange - A callback that is invoked with each updated document from the feed.
+ *                              For example, the callback may call broadcastEvent(doc).
+ */
+export const startChangesFeedListener = async (onChange) => {
+  // Start with the "now" sequence so that only new changes are reported.
+  // (Alternatively, set this to 0 or a specific seq if you need historical data.)
+  let since = 'now';
+
+  /**
+   * Poll the CouchDB _changes feed using long polling.
+   * Reconnects immediately after the request completes.
+   */
+  async function pollChanges() {
+    // Build the URL with long polling parameters and include_docs.
+    const url = `${DB_NAME}/_changes?feed=longpoll&include_docs=true&since=${since}&timeout=300000`;
+
+    try {
+      const data = await fetchCouchDB(url);
+      if (!data.last_seq) {
+        throw new Error(`HTTP error ${data}`);
+      }
+
+      // Process each change.
+      if (data.results && Array.isArray(data.results)) {
+        for (const change of data.results) {
+          if (change.doc) {
+            onChange(change.doc);
+          }
+        }
+      }
+
+      // Update the since value to the last sequence so subsequent polls only return new changes.
+      since = data.last_seq;
+    } catch (error) {
+      console.error('Error polling _changes feed:', error);
+      // Optional: wait a bit before retrying on error.
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    } finally {
+      // Immediately start the next poll.
+      pollChanges();
+    }
+  }
+
+  // Start the polling loop.
+  pollChanges();
+}
 
 export default null;
