@@ -27,9 +27,7 @@ This project is a **CouchDB-based NOSTR relay server** designed to efficiently s
 
 -   **CouchDB v3.x+** installed and running.
 
--   **Node.js (optional)** for additional tooling and monitoring.
-
--   **Docker (optional)** for containerized deployment.
+-   **Node.js 20+** for the websocket server.
 
 
 ### Setup Instructions
@@ -39,6 +37,7 @@ This project is a **CouchDB-based NOSTR relay server** designed to efficiently s
     ```
     git clone https://github.com/yourusername/couchdb-nostr-relay.git
     cd couchdb-nostr-relay
+    npm install
     ```
 
 2.  **Configure CouchDB**:
