@@ -20,6 +20,10 @@ This project is a **CouchDB-based NOSTR relay server** designed to efficiently s
 
 -   **Precomputed MapReduce Indexes**: Speeds up querying for specific events and metadata filtering.
 
+## Implemented NIPs
+
+- [x] NIP-01: Basic protocol flow description
+- [ ] NIP-02: Follow list
 
 ## Installation
 
@@ -41,8 +45,6 @@ This project is a **CouchDB-based NOSTR relay server** designed to efficiently s
     ```
 
 2.  **Configure CouchDB**:
-
-    -   Enable **CORS** if running in a browser environment.
 
     -   Create the necessary databases:
 
