@@ -1,4 +1,6 @@
+<p align="center">
 <img src="./logo.jpg" alt="CouchDB-NOSTR logo" width="200" height="200">
+</p>
 
 # CouchDB-NOSTR Relay Server
 
