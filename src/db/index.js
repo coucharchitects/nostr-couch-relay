@@ -138,4 +138,29 @@ export const startChangesFeedListener = async (onChange) => {
   pollChanges();
 }
 
+/**
+ * Bulk saves an array of documents to the CouchDB database using the _bulk_docs endpoint.
+ *
+ * This function allows you to perform a bulk insert/update operation on CouchDB.
+ * An optional parameter `customDbName` can be provided to specify a different database
+ * (for example, when running tests against a test database).
+ *
+ * @param {Array<Object>} docs - An array of document objects to be saved.
+ * @param {string} [customDbName] - Optional custom database name. If provided, the docs will be saved in that database instead of DB_NAME.
+ * @returns {Promise<Object>} The result of the bulk save operation.
+ */
+export const bulkSaveDocs = async (docs, customDbName) => {
+  try {
+    const dbName = customDbName || DB_NAME;
+    const result = await fetchCouchDB(`${dbName}/_bulk_docs`, {
+      method: 'POST',
+      body: JSON.stringify({ docs })
+    });
+    return result;
+  } catch (error) {
+    console.error('Error in bulk saving docs:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 export default null;

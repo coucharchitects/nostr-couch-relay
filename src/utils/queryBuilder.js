@@ -45,9 +45,10 @@ export function buildFilterQuery(filters) {
 
   const query = {
     selector,
-    // sort: [{ created_at: "desc" }],
-    limit: 1000
+    sort: [{ created_at: "desc" }],
+    limit: filters.limit || 1000
   };
+  console.log('Generated selector query', JSON.stringify(query))
 
   return query;
 }

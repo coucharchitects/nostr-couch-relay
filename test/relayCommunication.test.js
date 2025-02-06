@@ -132,7 +132,7 @@ describe("Client-Relay Communication", () => {
       const ws = new WebSocket(serverUrl);
       const subId = "subscription7";
       const filters  = {kinds: [1], authors: [/* will be set after event is created */]};
-      const event = await generateNewEvent({content: 'Replicated later'});
+      const event = await generateNewEvent({content: 'Replicated later1'});
 
       ws.on("open", async () => {
         filters.authors[0] = event.pubkey

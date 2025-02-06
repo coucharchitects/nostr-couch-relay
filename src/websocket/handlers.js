@@ -21,8 +21,9 @@ export async function handleEvent(ws, event) {
 
   try {
     // Store event in CouchDB
+    // should the keys be whitelisted or is it ok to go ahead and just push everything?
     const result = await insertEvent({
-      _id: event.id,
+      id: event.id,
       pubkey: event.pubkey,
       created_at: event.created_at,
       kind: event.kind,
@@ -92,7 +93,7 @@ export async function handleSubscription(ws, subId, filters, subscriptions) {
     if (events.docs.length) {
       // Send matching events to subscriber
       const processedDocs = renameCouchMetadata(events.docs)
-      console.log('Sending docs', processedDocs.length)
+      console.log('Sending events', processedDocs)
       for (const event of processedDocs) {
         const formattedEvent = {
           ...event,
