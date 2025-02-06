@@ -22,11 +22,11 @@ export const subscriptions = new Map();
 export function broadcastEvent(event) {
   for (const [subId, subscription] of subscriptions.entries()) {
     // Only send the event to subscribers if it matches the subscription filters.
-    if (subscription.matcher(event)) {
-      for (const subscriber of subscription.subscribers) {
-        console.log('Sending event to subscriber')
+    if (typeof subscription.matcher === "function" && subscription.matcher(event)) {
+      subscription.subscribers.forEach((subscriber) => {
+        console.log(`Sending event ${event.id || ""} to subscriber for subscription ${subId}`);
         subscriber.send(JSON.stringify(["EVENT", subId, event]));
-      }
+      });
     }
   }
 }

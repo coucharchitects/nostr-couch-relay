@@ -69,7 +69,7 @@ export async function handleSubscription(ws, subId, filters, subscriptions) {
   let subscription;
   if (!subscriptions.has(subId)) {
     // Build the Mango query and compile a matcher function.
-    const matcher = compileMatcher(query);
+    const matcher = compileMatcher(filters);
 
     subscription = {
       filters,
@@ -88,6 +88,7 @@ export async function handleSubscription(ws, subId, filters, subscriptions) {
   // should persist parameters to check against them on _changes feed update
   try {
     // Run query against CouchDB backend
+    const viewQuery = null
     const events = await findEvents(query)
 
     if (events.docs.length) {

@@ -6,7 +6,7 @@ import { bulkSaveDocs } from "../src/db/index.js";
 describe('Scaling Possibilities', () => {
   it('should insert 100k events and db size must be under 1gb', async () => {
     // use bulk updates to load the documents fast
-    const LIMIT = 10000
+    const LIMIT = 100000
     const BATCH = 500
     let savedAlready = 0
     let toSave = []
@@ -25,5 +25,5 @@ describe('Scaling Possibilities', () => {
       }
     }
     console.log('Saved events')
-  }, 600000)
+  }, 1200000)
 })

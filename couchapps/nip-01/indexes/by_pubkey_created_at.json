@@ -1,0 +1,11 @@
+{
+  "index": {
+    "fields": [
+      { "pubkey": "desc" },
+      { "created_at": "desc" }
+    ]
+  },
+  "name": "by_pubkey_created_at",
+  "type": "json",
+  "ddoc": "nip-01"
+}

@@ -60,7 +60,6 @@ server.listen(PORT, () => {
 
   // Start listening to DB changes and broadcast each updated document.
   startChangesFeedListener((doc) => {
-    console.log('Broadcasting event from couch', doc)
     // the doc should be transformed using eventUtils.renameCouchMetadata
     // instead of "id" there's "_id" from the couch doc
     broadcastEvent(doc);
