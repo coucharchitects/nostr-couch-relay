@@ -97,6 +97,47 @@ describe("Client-Relay Communication", () => {
     });
   });
 
+  it("should handle REQ messages with #p tags", async () => {
+    await new Promise((resolve, reject) => {
+      const ws = new WebSocket(serverUrl);
+      const subId = "subscription_p";
+      let receivedEvent = false;
+      let filters = {}
+
+      ws.on("open", async () => {
+        // first add the test event
+        const event = await generateNewEvent({
+          content: 'Test #p',
+          tags: [
+            ['p', '67876939cb2d3e333bf41b525aaa56ac2bc947b3d0adecca3167cf7eb2cb434f']
+          ]
+        });
+        ws.send(JSON.stringify(["EVENT", event]));
+
+        filters = {kinds: [event.kind], '#p': ['67876939cb2d3e333bf41b525aaa56ac2bc947b3d0adecca3167cf7eb2cb434f']};
+        // filters will be sent on successful event insert
+      });
+
+      ws.on("message", (data) => {
+        const message = JSON.parse(data.toString());
+        console.log('Got message', message)
+        // first ok is from message insert
+        if (message[0] === 'OK') {
+          ws.send(JSON.stringify(["REQ", subId, filters]));
+        } else if (message[0] === "EVENT") {
+          expect(message[1]).toBe(subId);
+          expect(message[2]).toHaveProperty("id");
+          receivedEvent = true;
+        } else if (message[0] === "EOSE") {
+          expect(message[1]).toBe(subId);
+          expect(receivedEvent).toBe(true);
+          ws.close();
+          resolve();
+        }
+      });
+    })
+  });
+
   it("should correctly terminate subscriptions on CLOSE messages", async () => {
     await new Promise((resolve, reject) => {
       const ws = new WebSocket(serverUrl);

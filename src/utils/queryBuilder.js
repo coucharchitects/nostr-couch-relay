@@ -57,6 +57,20 @@ export function buildFilterQuery(filters) {
     conditions.push({ created_at: range });
   }
 
+  // Tag filter: for "#p"
+  if (filters["#p"] && filters["#p"].length > 0) {
+    // Use $elemMatch to require that tags array has an element where:
+    // element[0] equals "p" and element[1] equals one of the provided values.
+    // If one value, use direct equality; if multiple, use $in.
+    const tagValueCondition =
+      filters["#p"].length === 1 ? filters["#p"][0] : { "$in": filters["#p"] };
+    conditions.push({
+      tags: {
+        "$elemMatch": { "0": "p", "1": tagValueCondition }
+      }
+    });
+  }
+
   let selector;
   if (conditions.length === 1) {
     selector = conditions[0];
@@ -116,6 +130,24 @@ export function compileMatcher(filters) {
   const gte = filters.since;
   const lte = filters.until;
 
+  // Create matcher for the "#p" tag filter.
+  let tagPMatcher = () => true;
+  if (filters["#p"] && filters["#p"].length > 0) {
+    const allowedTagPubkeys = new Set(filters["#p"]);
+    tagPMatcher = function(tags) {
+      if (!Array.isArray(tags)) return false;
+      // Return true if at least one tag is an array where:
+      // - The first element is "p"
+      // - The second element is one of the allowed values.
+      return tags.some(tag =>
+        Array.isArray(tag) &&
+        tag[0] === "p" &&
+        allowedTagPubkeys.has(tag[1])
+      );
+    };
+  }
+
+
   return function(doc) {
     // doc names are transformed to the ones from couch
     if (!idMatcher(doc._id)) return false;
@@ -123,33 +155,7 @@ export function compileMatcher(filters) {
     if (!kindMatcher(doc.kind)) return false;
     if (gte !== undefined && doc.created_at < gte) return false;
     if (lte !== undefined && doc.created_at > lte) return false;
+    if (!tagPMatcher(doc.tags)) return false;
     return true;
   };
-}
-
-/**
- * Builds a query parameter object for a CouchDB MapReduce view based on provided filters.
- *
- * The view is assumed to emit keys as arrays (e.g., [pubkey, kind, created_at, ...]).
- * This function constructs the key(s) parameter such that:
- *
- * - If `filters.authors` is set:
- *    - With a single author, the key becomes: [author, (optional) kind]
- *    - With multiple authors, the keys parameter becomes an array of key arrays:
- *         [ [author1, (optional) kind], [author2, (optional) kind], ... ]
- *
- * - If no authors are provided but a `kind` filter exists, the key becomes: [kind]
- *
- * This query parameter object can then be passed to the view query endpoint.
- *
- * @param {Object} filters - An object containing filter parameters.
- * @returns {Object} An object containing either a "key" property (for a single key) or a "keys" property (for multiple keys).
- */
-export function buildViewQuery(filters) {
-  // at the moment it seems this approach will not work with multiple values in a filter array
-  const result = [];
-  if (filters.authors && filters.authors.length > 0) {
-    // ... implementation pending ...
-  }
-  return result;
 }

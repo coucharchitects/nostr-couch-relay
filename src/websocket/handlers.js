@@ -94,7 +94,7 @@ export async function handleSubscription(ws, subId, filters, subscriptions) {
     if (events.docs.length) {
       // Send matching events to subscriber
       const processedDocs = renameCouchMetadata(events.docs)
-      console.log('Sending events', processedDocs)
+      // console.log('Sending events', JSON.stringify(query), processedDocs)
       for (const event of processedDocs) {
         const formattedEvent = {
           ...event,
